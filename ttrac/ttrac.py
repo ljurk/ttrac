@@ -69,7 +69,7 @@ def status(total, day=today()):
             ['day', i],
             ['start', data[i]['start']],
             ['duration', abs(start - datetime.now())],
-            ['stop', data[i]['stop'] if 'stop' in data else '-']
+            ['stop', data[i]['stop'] if 'stop' in data[i] else '-']
         ]
 
         if 'breaks' in data[i].keys():
@@ -104,8 +104,16 @@ def start(day=today()):
 
 
 @cli.command()
-def stop():
-    click.echo('Dropped the database')
+def stop(day=today()):
+    with open('data.json') as fh:
+        data = json.load(fh)
+    if day not in data and 'start' not in data[day]:
+        print("not started yet")
+        return
+    data[day]['stop'] = now()
+    with open('data.json', 'w') as fh:
+        fh.write(json.dumps(data, indent=4))
+    click.echo("OK")
 
 if __name__ == '__main__':
     cli()
