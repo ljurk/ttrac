@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ttrac',
-    version='0.0.3',
+    version='0.0.4',
     packages=['ttrac'],
     author="Lukas Jurk",
     author_email="ljurk@pm.me",
