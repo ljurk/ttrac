@@ -82,10 +82,11 @@ def status(total, __file, day=today()):
         if i != day and not total:
             continue
         start = datetime.strptime(f"{i} {data[i]['start']}", strptimeformat)
+        stop = datetime.strptime(f"{i} {data[i]['stop']}", strptimeformat) if 'stop' in data[i] else datetime.now()
         table_data = [
             ['day', i],
             ['start', data[i]['start']],
-            ['duration', abs(start - datetime.now())],
+            ['duration', abs(start - stop)],
             ['stop', data[i]['stop'] if 'stop' in data[i] else '-']
         ]
 
