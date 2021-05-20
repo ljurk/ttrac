@@ -148,6 +148,12 @@ def stop(__file, day=today()):
     __file.write(json.dumps(data, indent=4))
     click.echo("OK")
 
+@cli.command()
+def version():
+    """prints the installed ttrac version"""
+    import pkg_resources  # part of setuptools
+    print(pkg_resources.require("ttrac")[0].version)
+
 if __name__ == '__main__':
     if not os.path.isfile(defaultfile):
         os.makedirs(os.path.dirname(defaultfile), exist_ok=True)
