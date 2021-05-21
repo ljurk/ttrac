@@ -39,6 +39,18 @@ Commands:
 Here is an example how `ttrac status` output looks like:
 
 ```
++----------+----------------+
+| day      | 21-05-2021     |
++----------+----------------+
+| start    | 09:15:44       |
+| duration | 0:28:07.180515 |
+| stop     | -              |
++----------+----------------+
+```
+
+if you append `-t\--total`, all tracked days will be printed
+
+```
 +------------+------------+
 | day        | 19-05-2021 |
 +------------+------------+
