@@ -4,8 +4,8 @@ import json
 import click
 from terminaltables import AsciiTable
 
-timeformat = "%H:%M:%S"
-strptimeformat = "%d-%m-%Y %H:%M:%S"
+timeformat = "%H:%M"
+strptimeformat = f"%d-%m-%Y {timeformat}"
 dayformat = "%d-%m-%Y"
 defaultfile=os.path.expanduser('~/.config/ttrac/data.json')
 
@@ -64,11 +64,6 @@ def stop(__file, day=today()):
     __file.write(json.dumps(data, indent=4))
     click.echo("OK")
 
-
-def printTable(table_data):
-    table = AsciiTable(table_data)
-    print(table.table)
-
 @cli.command()
 @click.option('-t', '--total', is_flag=True, default=False)
 @click.argument('--file', type=click.File('r'), default=defaultfile)
@@ -101,12 +96,13 @@ def status(total, __file, day=today()):
                 table_data = table_data + [[f'{delim} start', y['start']],
                                [f'{delim} stop', y['stop'] if 'stop' in y else '-'],
                                [f'{delim} duration', delta]]
-        printTable(table_data)
+        print(AsciiTable(table_data).table)
 
 
 @cli.command()
 @click.argument('--file', type=click.File('r+'), default=defaultfile)
-def start(__file, day=today()):
+@click.option('-t', '--time', type=str, default=now())
+def start(__file, time, day=today()):
     """start timetracking"""
     try:
         data = json.load(__file)
@@ -114,10 +110,10 @@ def start(__file, day=today()):
         data = {day: {}}
     if day not in data:
         data[day] = {}
-    data[day]['start'] = now()
+    data[day]['start'] = time
     clear(__file)
     __file.write(json.dumps(data, indent=4))
-    click.echo("OK")
+    click.echo(f"OK, starting at {time}")
 
 
 @cli.command()
@@ -133,7 +129,8 @@ def cat(__file):
 
 @cli.command()
 @click.argument('--file', type=click.File('r+'), default=defaultfile)
-def stop(__file, day=today()):
+@click.option('-t', '--time', type=str, default=now())
+def stop(__file, time=now(), day=today()):
     """stop timetracking"""
     try:
         data = json.load(__file)
@@ -143,10 +140,10 @@ def stop(__file, day=today()):
     if day not in data and 'start' not in data[day]:
         print("not started yet")
         return
-    data[day]['stop'] = now()
+    data[day]['stop'] = time
     clear(__file)
     __file.write(json.dumps(data, indent=4))
-    click.echo("OK")
+    click.echo(f"OK, stopping at {time}")
 
 @cli.command()
 def version():
