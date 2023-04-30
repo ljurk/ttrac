@@ -1,7 +1,9 @@
+import sys
 import os.path
 from datetime import datetime
 import json
 import click
+import csv as csvModule
 from terminaltables import AsciiTable
 
 timeformat = "%H:%M"
@@ -30,18 +32,17 @@ def _break():
 
 @_break.command()
 @click.argument('--file', type=click.File('r+'), default=defaultfile)
-def start(__file, day=today()):
+@click.option('-t', '--time', type=str, default=now())
+def start(__file, time=now(), day=today()):
     """start a break"""
     try:
         data = json.load(__file)
     except json.decoder.JSONDecodeError:
         exit(f'cannot parse json from {defaultfile}')
-    if 'breaks' not in data[day].keys():
-        data[day]['breaks'] = [{'start': now()}]
+    if 'break' not in data[day].keys():
+        data[day]['break'] = {'start': time}
     else:
-        if 'stop' not in data[day]['breaks'][-1].keys():
-            exit("previous break hasnt stopped yet")
-        data[day]['breaks'].append({'start': now()})
+        data[day]['break']['start'] = time
 
     clear(__file)
     __file.write(json.dumps(data, indent=4))
@@ -49,16 +50,17 @@ def start(__file, day=today()):
 
 @_break.command()
 @click.argument('--file', type=click.File('r+'), default=defaultfile)
-def stop(__file, day=today()):
+@click.option('-t', '--time', type=str, default=now())
+def stop(__file, time=now(), day=today()):
     """stop a break"""
     try:
         data = json.load(__file)
     except json.decoder.JSONDecodeError:
         exit(f'cannot parse json from {defaultfile}')
-    if 'breaks' not in data[day].keys() or 'stop' in data[day]['breaks'][-1].keys():
-        exit("no break started yet")
+    if 'break' not in data[day].keys():
+        data[day]['break'] = {'stop': time}
     else:
-        data[day]['breaks'][-1]['stop'] = now()
+        data[day]['break']['stop'] = time
 
     clear(__file)
     __file.write(json.dumps(data, indent=4))
@@ -85,17 +87,8 @@ def status(total, __file, day=today()):
             ['stop', data[i]['stop'] if 'stop' in data[i] else '-']
         ]
 
-        if 'breaks' in data[i].keys():
-            table_data.append(["Breaks", ""])
-            for num, y in enumerate(data[i]['breaks']):
-                if 'stop' in y:
-                    delta = abs(datetime.strptime(f"{i} {y['start']}", strptimeformat) - datetime.strptime(f"{i} {y['stop']}", strptimeformat))
-                else:
-                    delta = abs(datetime.strptime(f"{i} {y['start']}", strptimeformat) - datetime.now())
-                delim = '-' * (num + 1)
-                table_data = table_data + [[f'{delim} start', y['start']],
-                               [f'{delim} stop', y['stop'] if 'stop' in y else '-'],
-                               [f'{delim} duration', delta]]
+        if 'break' in data[i].keys():
+            table_data.append(["BreakDuration", abs(datetime.strptime(data[i]['break']['stop'], timeformat) - datetime.strptime(data[i]['break']['start'], timeformat))])
         print(AsciiTable(table_data).table)
 
 
@@ -144,6 +137,27 @@ def stop(__file, time=now(), day=today()):
     clear(__file)
     __file.write(json.dumps(data, indent=4))
     click.echo(f"OK, stopping at {time}")
+
+@cli.command()
+@click.argument('--file', type=click.File('r+'), default=defaultfile)
+def csv(__file):
+    """export data as csv"""
+    data = json.load(__file)
+    print('day;start;stop;breakDuration;Sum')
+    for day, dayItems in data.items():
+        print(day, end=';')
+        print(dayItems['start'], end=';')
+        print(dayItems['stop'], end=';')
+        if 'break' in dayItems:
+            breakDuration = abs(datetime.strptime(dayItems['break']['stop'], timeformat) - datetime.strptime(dayItems['break']['start'], timeformat))
+            print(breakDuration, end=';')
+            print(abs(datetime.strptime(dayItems['stop'], timeformat) - datetime.strptime(dayItems['start'], timeformat)) - breakDuration)
+        else:
+            print('', end=';')
+            print(abs(datetime.strptime(dayItems['stop'], timeformat) - datetime.strptime(dayItems['start'], timeformat)))
+    #headers = data[0].keys()
+
+    #writer.writeheader()
 
 @cli.command()
 def version():
