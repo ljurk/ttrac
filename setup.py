@@ -17,6 +17,7 @@ setup(
     },
     install_requires=[
         "Click",
+        "terminaltables",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
